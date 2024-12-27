@@ -182,66 +182,43 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
         # a list of differences between one condition and another in the comparison
         template_to_compare_to_pid_to_event_to_diff = {}
         for template_id in template_to_pid_to_cond_to_event_to_mean:
-            if template_id not in template_to_compare_to_pid_to_tr_diffs:
-                template_to_compare_to_pid_to_tr_diffs[template_id] = {}
+            if template_id not in template_to_compare_to_pid_to_event_to_diff:
+                template_to_compare_to_pid_to_event_to_diff[template_id] = {}
             for pid in template_to_pid_to_cond_to_event_to_mean[template_id]:
-                for comparison_name in all_compare_names:
-                    compare1_name,compare2_name = comparison_name.split("_")    
-                    if comparison_name not in template_to_compare_to_pid_to_tr_diffs[template_id]:
-                        template_to_compare_to_pid_to_tr_diffs[template_id][comparison_name] = {}
-                    compare1 =  template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare1_name]
-                    compare2 = template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare2_name]
-                    if len(compare1_list) != len(compare2_list):
-                        print("Error: for the same template and light, two paths have different number of tr's")
-                        return
-                    tr_difference = compare1 - compare2
-                    if only_events2_3_and_4:
-                        tr_differences = tr_differences[event_2_start:event_5_start]
-                    template_to_compare_to_pid_to_tr_diffs[template_id][comparison_name][pid] = tr_differences
+                for event_id in [2,3,4]:
+                    for comparison_name in all_compare_names:
+                        compare1_name,compare2_name = comparison_name.split("_")    
+                        if comparison_name not in template_to_compare_to_pid_to_event_to_diff[template_id]:
+                            template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name] = {}
+                        compare1 =  template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare1_name][event_id]
+                        compare2 = template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare2_name][event_id]
+                        tr_difference = compare1 - compare2
+                        template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name][pid][event_id] = tr_difference
 
         # step 3: is to get the across subject tvalue for each comparison
         # at each TR for each template and comparison
-        template_to_compare_to_trTstats = {}
-        for template_id in template_to_compare_to_pid_to_tr_diffs:
-            for compare_name in template_to_compare_to_pid_to_tr_diffs[template_id]:
-                # check that all participants have the same length of tr_diffs
-                # while also getting list of diffs at each tr
-                length_tr_list = []
-                tr_num_to_list_of_diffs = {}
-                for pid in template_to_compare_to_pid_to_tr_diffs[template_id][compare_name]:
-                    tr_diffs = template_to_compare_to_pid_to_tr_diffs[template_id][compare_name][pid]
-                    for index,diff in enumerate(tr_diffs):
-                        if index not in tr_num_to_list_of_diffs:
-                            tr_num_to_list_of_diffs[index] = []
-                        tr_num_to_list_of_diffs[index].append(diff)
-                    length_tr_list.append(len(tr_diffs))
-                length_tr_list = np.array(length_tr_list)
-                if not np.all(length_tr_list[0] == length_tr_list):
-                    pdb.set_trace()
-                    print("Error: not all the same length_tr_lists")
-                    return
-                # now go through each tr index, and get a ttest
-                # make sure that we have 40 participants in each tr num
-                # and make sure we don't have nan
-                for tr_num in tr_num_to_list_of_diffs:
-                    if len(tr_num_to_list_of_diffs[tr_num]) != 40 or np.isnan(sum(tr_num_to_list_of_diffs[tr_num])):
-                        print(tr_num_to_list_of_diffs[tr_num])
-                        pdb.set_trace()
-                        print("Error: missing participant or nan")
-                        return
-               
-                tr_Tstats = [get_t_stat_of_list(tr_num_to_list_of_diffs[tr_num]) for tr_num in range(0,len(tr_num_to_list_of_diffs.keys()))]
-                if template_id not in template_to_compare_to_trTstats:
-                    template_to_compare_to_trTstats[template_id] = {}
-                template_to_compare_to_trTstats[template_id][compare_name] = tr_Tstats
-                # for each searchlight get a feature list
+        template_to_compare_to_event_to_Tstat = {}
+        for template_id in template_to_compare_to_pid_to_event_to_diff:
+            for compare_name in template_to_compare_to_pid_to_event_to_diff[template_id]:
+                    event_to_list_of_diffs = {2:[],3:[],4:[]}
+                    for pid in template_to_compare_to_pid_to_event_to_diff[template_id][compare_name]:
+                        for event_id in [2,3,4]:
+                            event_diff = template_to_compare_to_pid_to_event_to_diff[template_id][compare_name][pid][event_id]
+                            event_to_list_of_diffs[event_id].append(event_diff)
+                    if template_id not in template_to_compare_to_event_to_Tstat:
+                        template_to_compare_to_event_to_Tstat[template_id] = {}
+                    if compare_name not in template_to_compare_to_event_to_Tstat[template_id]:
+                        template_to_compare_to_event_to_Tstat[template_id][compare_name] = {}
+
+                    # for each searchlight get a feature list
         # step 4: compile those tstats into one vector which is our final
         # tvalue vector representation that we will cluster
         features = []
         for template_id in [2,3,4]:
             for compare_name in all_compare_names:
-                for tr_stat in template_to_compare_to_trTstats[template_id][compare_name]:
-                    features.append(tr_stat)
+                for event_id in [2,3,4]:
+                    stat = template_to_compare_to_event_to_Tstat[template_id][compare_name][event_id]
+                    features.append(stat)
         print("len(features): ", len(features))
         # output it!
         features_np = np.array(features)
