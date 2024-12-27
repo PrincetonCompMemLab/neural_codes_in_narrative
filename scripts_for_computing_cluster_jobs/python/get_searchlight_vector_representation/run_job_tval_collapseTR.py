@@ -95,7 +95,7 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
         template3_count = 0
         template4_count = 0
         template_to_pid_to_cond_to_matrices = {} # create this dict for later usage when creating fingerprint plots
-        template_to_pid_to_cond_to_mean = {}
+        template_to_pid_to_cond_to_event_to_mean = {}
         i = 0
         # step 1 is to get dict mapping the template (2,3 or 4) to pid (N = 40) to cond (condition) where condition is synonymous
         # with "other-Event-same-Schema" and so on
@@ -144,21 +144,28 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 mean_list = np.nanmean(new_arr[1:13, 1:75], axis = 0).tolist()
                 new_arr = new_arr[1:13, 1:75].tolist()
             else:
-                mean = np.nanmean(np.nanmean(new_arr, axis = 0).tolist())
+                mean_all_events = np.nanmean(new_arr, axis = 0).tolist()
+                mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
+                mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
+                mean_event4 = np.nanmean(mean_all_events[event_4_start:event_5_start])
+
                 new_arr = new_arr.tolist()
             # error check if the mean list has an nan in it which means that all weddings in one tr had nan
-            if np.isnan(mean):
-                print("Error: mean is np.nan")
+            if np.isnan(mean_event2) or np.isnan(mean_event3) or np.isnan(mean_event4):
+                print("Error: mean is np.nan", light_id)
                 # if isnan has all Falses and so everything is 0
-                return 
+                return
             if str(template_id) not in template_to_pid_to_cond_to_matrices:
                 template_to_pid_to_cond_to_matrices[str(template_id)] = {}
-                template_to_pid_to_cond_to_mean[template_id] = {}
+                template_to_pid_to_cond_to_event_to_mean[template_id] = {}
             if pid not in template_to_pid_to_cond_to_matrices[str(template_id)]:
                 template_to_pid_to_cond_to_matrices[str(template_id)][pid] = {}
-                template_to_pid_to_cond_to_mean[template_id][pid] = {}
+                template_to_pid_to_cond_to_event_to_mean[template_id][pid] = {}
             template_to_pid_to_cond_to_matrices[str(template_id)][pid][cond] = new_arr
-            template_to_pid_to_cond_to_mean[template_id][pid][cond] = mean
+            template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond] = {}
+            template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][2] = mean_event2
+            template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][3] = mean_event3
+            template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][4] = mean_event4
         with open(output_dir + "searchlights_matrices_orjson/" + light_id, "wb") as f:
             f.write(orjson.dumps(template_to_pid_to_cond_to_matrices))
         # check that we got even number for each template for error check
@@ -173,17 +180,17 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
         # step 2 is to get the dict mapping the template to the comparison
         # where there are 6 differen comparisons between the 4 conditions, to pid to 
         # a list of differences between one condition and another in the comparison
-        template_to_compare_to_pid_to_diff = {}
-        for template_id in template_to_pid_to_cond_to_mean:
+        template_to_compare_to_pid_to_event_to_diff = {}
+        for template_id in template_to_pid_to_cond_to_event_to_mean:
             if template_id not in template_to_compare_to_pid_to_tr_diffs:
                 template_to_compare_to_pid_to_tr_diffs[template_id] = {}
-            for pid in template_to_pid_to_cond_to_mean[template_id]:
+            for pid in template_to_pid_to_cond_to_event_to_mean[template_id]:
                 for comparison_name in all_compare_names:
                     compare1_name,compare2_name = comparison_name.split("_")    
                     if comparison_name not in template_to_compare_to_pid_to_tr_diffs[template_id]:
                         template_to_compare_to_pid_to_tr_diffs[template_id][comparison_name] = {}
-                    compare1 =  template_to_pid_to_cond_to_mean[template_id][pid][compare1_name]
-                    compare2 = template_to_pid_to_cond_to_mean[template_id][pid][compare2_name]
+                    compare1 =  template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare1_name]
+                    compare2 = template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare2_name]
                     if len(compare1_list) != len(compare2_list):
                         print("Error: for the same template and light, two paths have different number of tr's")
                         return
