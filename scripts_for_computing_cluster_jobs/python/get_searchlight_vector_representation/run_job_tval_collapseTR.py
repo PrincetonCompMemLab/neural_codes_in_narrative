@@ -148,7 +148,6 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
                 mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
                 mean_event4 = np.nanmean(mean_all_events[event_4_start:event_5_start])
-
                 new_arr = new_arr.tolist()
             # error check if the mean list has an nan in it which means that all weddings in one tr had nan
             if np.isnan(mean_event2) or np.isnan(mean_event3) or np.isnan(mean_event4):
@@ -192,8 +191,8 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                             template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name] = {}
                         compare1 =  template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare1_name][event_id]
                         compare2 = template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare2_name][event_id]
-                        tr_difference = compare1 - compare2
-                        template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name][pid][event_id] = tr_difference
+                        event_difference = compare1 - compare2
+                        template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name][pid][event_id] = event_difference
 
         # step 3: is to get the across subject tvalue for each comparison
         # at each TR for each template and comparison
