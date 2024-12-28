@@ -258,7 +258,7 @@ output_dir = "/scratch/gpfs/rk1593/clustering_output/"  # output dhere on della
 json_file_name = "jobs_info_dict_manual_jupyter_without_tuples.json"
 testing = False
 num_chunks = 31
-job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
+job_id_in = 1 #int(os.environ["SLURM_ARRAY_TASK_ID"])
 print("job_id_in: ", job_id_in)
 if bash_it:
     run_jobs(input_dir, json_path = output_dir + json_file_name, 
