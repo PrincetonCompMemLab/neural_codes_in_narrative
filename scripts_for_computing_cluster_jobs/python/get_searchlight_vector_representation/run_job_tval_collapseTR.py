@@ -50,21 +50,21 @@ def run_jobs(input_dir, json_path, testing = False,
         processes_list = []
         for index,chunk in enumerate(chunks_of_searchlights):
             print("process index: ", index)
-            go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
+            # go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
+            #                              testing, 
+            #                              output_dir,
+            #                             input_dir,
+            #                             )
+            new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
+                            args = (   chunk, 
                                          testing, 
-                                         output_dir,
+                                         output_dir, 
                                         input_dir,
-                                        )
-        #     new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
-        #                     args = (   chunk, 
-        #                                  testing, 
-        #                                  output_dir, 
-        #                                 input_dir,
-        #                                 ))
-        #     new_process.start()
-        #     processes_list.append(new_process)
-        # for p in processes_list:
-        #     p.join()
+                                        ))
+            new_process.start()
+            processes_list.append(new_process)
+        for p in processes_list:
+            p.join()
 
 # requires: searchlight_to_files_tuples for all searchlights, subset_list_of_searchlights are a list of the searchlights we want to include for this job
 # outputs a csv file for each searchlight
@@ -167,8 +167,8 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][2] = mean_event2
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][3] = mean_event3
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][4] = mean_event4
-        with open(output_dir + "searchlights_matrices_orjson/" + light_id, "wb") as f:
-            f.write(orjson.dumps(template_to_pid_to_cond_to_matrices))
+        # with open(output_dir + "searchlights_matrices_orjson/" + light_id, "wb") as f:
+        #     f.write(orjson.dumps(template_to_pid_to_cond_to_matrices))
         # check that we got even number for each template for error check
         if template2_count != 160 or template3_count != 160 or template4_count != 160:
             print("Error!")

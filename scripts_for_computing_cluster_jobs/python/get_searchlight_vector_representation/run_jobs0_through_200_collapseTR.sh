@@ -11,5 +11,4 @@
 
 module load anaconda3/2021.5
 conda activate wedding_schema
-
-python run_job_tval.py
+python run_job_tval_collapseTR.py
