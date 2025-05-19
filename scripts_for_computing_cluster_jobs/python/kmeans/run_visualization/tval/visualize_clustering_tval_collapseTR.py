@@ -263,19 +263,19 @@ def process_cluster(return_dict, cluster_label, df, cluster_id_to_distilled_ligh
     for light_index,light_id in enumerate(light_list):
         if light_index % 1000 == 0:
             print("cluster_label: ",cluster_label ,", light_index: ", light_index)
-        template_to_pid_to_cond_to_matrix = get_template_to_pid_to_cond_to_matrix(light_id)
+        template_to_pid_to_cond_to_matrix = get_template_to_pid_to_cond_to_matrix_with_json(light_id)
         for template_id in [2,3,4]:
-            for pid in template_to_pid_to_cond_to_matrix[template_id]:
+            for pid in template_to_pid_to_cond_to_matrix[str(template_id)]:
                 if pid not in unique_pids_list:
                     unique_pids_list.append(pid)
                 if pid not in pid_to_template_to_cond_to_event_to_mean_per_light:
                     pid_to_template_to_cond_to_event_to_mean_per_light[pid] = {}
                 if template_id not in pid_to_template_to_cond_to_event_to_mean_per_light[pid]:
                     pid_to_template_to_cond_to_event_to_mean_per_light[pid][template_id] = {}
-                for cond in template_to_pid_to_cond_to_matrix[template_id][pid]:
+                for cond in template_to_pid_to_cond_to_matrix[str(template_id)][pid]:
                     if cond not in pid_to_template_to_cond_to_event_to_mean_per_light[pid][template_id]:
                         pid_to_template_to_cond_to_event_to_mean_per_light[pid][template_id][cond] = {}
-                    new_arr = np.array(template_to_pid_to_cond_to_matrix[template_id][pid][cond])
+                    new_arr = np.array(template_to_pid_to_cond_to_matrix[str(template_id)][pid][cond])
                     mean_all_events = np.nanmean(new_arr, axis = 0).tolist()
                     mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
                     mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
@@ -323,10 +323,12 @@ def process_cluster(return_dict, cluster_label, df, cluster_id_to_distilled_ligh
                     print("Error: n != 40")
                     return
                 lb_ub = get_b(n,cluster_std,cluster_mean)
-                temp_dict[template_id][cond][event] = {"mean":cluster_mean,
-                                                "std": cluster_std,
-                                                "n":n,
-                                                "lb_ub": lb_ub}
+                temp_dict[template_id][cond][event] = {"collapseTR_mean_each_pid":this_event_mean_each_pid}
+
+                # temp_dict[template_id][cond][event] = {"collapseTR_mean_each_pid":cluster_mean,
+                #                                 "std": cluster_std,
+                #                                 "n":n,
+                #                                 "lb_ub": lb_ub}
 
     return_dict[cluster_label] = temp_dict
 
@@ -380,7 +382,7 @@ def get_cluster_id_to_distilled_searchlights(K, distill_numLights,
 #job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
 for job_id_in in [6,5,7]:
     K = job_id_in
-    cluster_assignment_csv_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_assignments_tval_collapseTR/kmeans_" + str(K) + "clusters_tval_collapseTR.csv"
+    cluster_assignment_csv_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_assignments_tval_collapseTR/kmeans_" + str(K) + "clusters_collapseTR.csv"
     exaggerated_0 = False
     weight_it = True
     cap_zero = False
