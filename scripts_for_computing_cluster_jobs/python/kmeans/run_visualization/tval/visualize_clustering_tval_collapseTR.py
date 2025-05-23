@@ -247,6 +247,7 @@ def process_cluster(return_dict, cluster_label, df, cluster_id_to_distilled_ligh
     # first get the N searchlight fingerprint plots for each of the 40 subject fingerprint plots
     pid_to_template_to_cond_to_event_to_mean_per_light = {}
     unique_pids_list = []
+    print(f"cluster label {cluster_label}, len(light_list): {len(light_list)}")
     for light_index,light_id in enumerate(light_list):
         if light_index % 1000 == 0:
             print("cluster_label: ",cluster_label ,", light_index: ", light_index)
@@ -337,25 +338,13 @@ def from_cluster_labels_to_fingerprint_avg_df(df, cluster_id_to_distilled_lights
         cluster_to_template_to_cond_to_event_to_violin[key] = return_dict[key]
     return create_raw_df_clusters_fingerprint_to_plot(cluster_to_template_to_cond_to_event_to_violin)
 
-
-def get_cluster_id_to_distilled_searchlights(K, distill_numLights,
-                      exaggerated_0, weight_it, cap_zero, fraction):
+def get_cluster_id_to_distilled_searchlights(K, distill_numLights, fraction,by_sil = True):
     cluster_id_to_distilled_lights = {}
     for cluster_id in range(1,K+1):
-        ranks_dir = "/scratch/gpfs/rk1593/clustering_output/kmeans_searchlight_ranks/K" + str(K) + "/kmeans" + str(K) + "cluster" + str(cluster_id) + "_ranks"
-        if exaggerated_0:
-            ranks_dir += "_Consider0"
-        else:
-            ranks_dir += "_NoConsider0"
-        if weight_it:
-            ranks_dir += "_WeightByMean"
-        else:
-            ranks_dir += "_NoWeightByMean"
-        if cap_zero:
-            ranks_dir += "_CapZero"
-        else:
-            ranks_dir += "_NoCapZero"
+        ranks_dir = "/scratch/gpfs/rk1593/clustering_output/kmeans_searchlight_ranks_collapseTR/K" + str(K) + "/kmeans" + str(K) + "cluster" + str(cluster_id) + "_ranks_collapseTR"
+        ranks_dir += "_by_silhouttes"
         ranks_dir += ".csv"
+        print(ranks_dir)
         ranks_df = pd.read_csv(ranks_dir)
         ranked_searchlights_in_cluster = ranks_df["searchlights_in_cluster"].tolist()
         if fraction:
@@ -366,39 +355,27 @@ def get_cluster_id_to_distilled_searchlights(K, distill_numLights,
     return cluster_id_to_distilled_lights
 
 
-#job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
-for job_id_in in [6,5,7]:
-    K = job_id_in
-    cluster_assignment_csv_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_assignments_tval_collapseTR/kmeans_" + str(K) + "clusters_collapseTR.csv"
-    exaggerated_0 = False
-    weight_it = True
-    cap_zero = False
-    distill_it = False
-    distill_numLights = 0.5
-    fraction = True
-    optional_focus = None
-    if distill_it:  
-        cluster_id_to_distilled_lights = get_cluster_id_to_distilled_searchlights(K, distill_numLights, exaggerated_0, weight_it, cap_zero, fraction)
-    else:
-        cluster_id_to_distilled_lights = None
-    assignment_df = pd.read_csv(cluster_assignment_csv_path)
-    in_json_dir = "/scratch/gpfs/rk1593/clustering_output/"
-    raw_df = from_cluster_labels_to_fingerprint_avg_df(assignment_df, cluster_id_to_distilled_lights)
-    out_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval_collapseTR/kmeans_" + str(K) + "clusters_tval_collapseTR" 
-    if distill_it:
-        if exaggerated_0:
-            out_path += "_Consider0"
-        else:
-            out_path += "_NoConsider0"
-        if weight_it:
-            out_path += "_WeightByMean"
-        else:
-            out_path += "_NoWeightByMean"
-        if cap_zero:
-            out_path += "_CapZero"
-        else:
-            out_path += "_NoCapZero"
-        out_path += ("_" + str(distill_numLights) + "distill_numLights")
-    out_path += ".csv"
-    raw_df.to_csv(out_path)
+job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
+K = job_id_in
+cluster_assignment_csv_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_assignments_tval_collapseTR/kmeans_" + str(K) + "clusters_collapseTR.csv"
+exaggerated_0 = False
+weight_it = True
+cap_zero = False
+distill_it = False
+distill_numLights = 0.05
+fraction = True
+optional_focus = None
+if distill_it:  
+    cluster_id_to_distilled_lights = get_cluster_id_to_distilled_searchlights(K, distill_numLights, fraction)
+else:
+    cluster_id_to_distilled_lights = None
+assignment_df = pd.read_csv(cluster_assignment_csv_path)
+in_json_dir = "/scratch/gpfs/rk1593/clustering_output/"
+raw_df = from_cluster_labels_to_fingerprint_avg_df(assignment_df, cluster_id_to_distilled_lights)
+out_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval_collapseTR/kmeans_" + str(K) + "clusters_tval_collapseTR" 
+if distill_it:
+    out_path += "_by_sil"
+    out_path += ("_" + str(distill_numLights) + "distill_numLights")
+out_path += ".csv"
+raw_df.to_csv(out_path)
 
