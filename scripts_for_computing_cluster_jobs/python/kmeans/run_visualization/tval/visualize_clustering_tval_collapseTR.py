@@ -199,44 +199,31 @@ def interpret(cond, template_id, event_match_id):
 def create_raw_df_clusters_fingerprint_to_plot(cluster_to_template_to_cond_to_event_to_violin):
     cluster_id_list = []
     condition_list = []
-    corr_list = []
+    mean_each_pid_list = []
     matching_id_list = []
     template_id_list = []
-    std_list = []
-    n_list = []
-    CI_lb_list = []
-    CI_ub_list = []
+    pid_list = []
 
     for cluster_id in cluster_to_template_to_cond_to_event_to_violin:
         for template_id in cluster_to_template_to_cond_to_event_to_violin[cluster_id]:
             for cond in cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id]:
                     for event in cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond]:
-                        cluster_id_list.append(cluster_id)
-                        template_id_list.append(template_id)
-                        corr_list.append(cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond][event]["mean"])
-                        std_list.append(cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond][event]["std"])
-                        lb,ub = cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond][event]["lb_ub"]
-                        CI_lb_list.append(lb)
-                        CI_ub_list.append(ub)
-                        condition_list.append(cond)
-                        matching_id_list.append(event)
-                        n_list.append(cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond][event]["n"])
-# {"mean":cluster_mean,
-# "std": cluster_std,
-# "n":n,
-# "lb_ub": lb_ub}
-# The same-event/same-schema condition is always the correct-path condition, and the other-event/same-schema condition is always the other-path-from-same-schema condition.
-
+                        info_dict = cluster_to_template_to_cond_to_event_to_violin[cluster_id][template_id][cond][event]
+                        for this_event_mean_this_participant, pid in zip (info_dict["collapseTR_mean_each_pid"], info_dict["pids_list"]):
+                            mean_each_pid_list.append(this_event_mean_this_participant)
+                            pid_list.append(pid)
+                            cluster_id_list.append(cluster_id)
+                            template_id_list.append(template_id)
+                            condition_list.append(cond)
+                            matching_id_list.append(event)
+    # The same-event/same-schema condition is always the correct-path condition, and the other-event/same-schema condition is always the other-path-from-same-schema condition.
     output_dict = {
-                   "path_id": condition_list,
-                   "event_template_id": template_id_list,
                    "cluster_id": cluster_id_list,
-                   "corr":corr_list,
-                   "std": std_list,
-                   "n":n_list, # we should n be the same for every cluster, check that!
-                   "lower_bound":CI_lb_list,
-                   "upper_bound":CI_ub_list,
-                   "event_matching_id":matching_id_list }
+                   "event_template_id": template_id_list,
+                   "event_matching_id":matching_id_list,
+                   "path_id": condition_list,
+                   "pid": pid_list,
+                  "mean_each_pid": mean_each_pid_list}
     return pd.DataFrame(output_dict)
 
 def get_b(n, s, x):
@@ -323,7 +310,7 @@ def process_cluster(return_dict, cluster_label, df, cluster_id_to_distilled_ligh
                     print("Error: n != 40")
                     return
                 lb_ub = get_b(n,cluster_std,cluster_mean)
-                temp_dict[template_id][cond][event] = {"collapseTR_mean_each_pid":this_event_mean_each_pid}
+                temp_dict[template_id][cond][event] = {"collapseTR_mean_each_pid":this_event_mean_each_pid, "pids_list": unique_pids_list}
 
                 # temp_dict[template_id][cond][event] = {"collapseTR_mean_each_pid":cluster_mean,
                 #                                 "std": cluster_std,
