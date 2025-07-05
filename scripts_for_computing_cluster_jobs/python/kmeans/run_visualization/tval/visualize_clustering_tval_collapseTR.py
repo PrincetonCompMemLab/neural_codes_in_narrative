@@ -372,7 +372,7 @@ else:
 assignment_df = pd.read_csv(cluster_assignment_csv_path)
 in_json_dir = "/scratch/gpfs/rk1593/clustering_output/"
 raw_df = from_cluster_labels_to_fingerprint_avg_df(assignment_df, cluster_id_to_distilled_lights)
-out_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval_collapseTR/kmeans_" + str(K) + "clusters_tval_collapseTR" 
+out_path = "/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval_collapseTR/kmeans_" + str(K) + "clusters_collapseTR" 
 if distill_it:
     out_path += "_by_sil"
     out_path += ("_" + str(distill_numLights) + "distill_numLights")
