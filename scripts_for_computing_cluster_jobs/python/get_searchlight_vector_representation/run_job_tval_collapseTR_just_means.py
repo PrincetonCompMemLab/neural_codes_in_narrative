@@ -145,6 +145,8 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 new_arr = new_arr[1:13, 1:75].tolist()
             else:
                 mean_all_events = np.nanmean(new_arr, axis = 0).tolist()
+                import pdb
+                pdb.set_trace()
                 mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
                 mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
                 mean_event4 = np.nanmean(mean_all_events[event_4_start:event_5_start])
@@ -162,13 +164,10 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 template_to_pid_to_cond_to_event_to_mean[template_id][pid] = {}
             template_to_pid_to_cond_to_matrices[str(template_id)][pid][cond] = new_arr
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond] = {}
-            import pdb
-            pdb.set_trace()
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][2] = mean_event2
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][3] = mean_event3
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][4] = mean_event4
-        # with open(output_dir + "searchlights_matrices_orjson/" + light_id, "wb") as f:
-        #     f.write(orjson.dumps(template_to_pid_to_cond_to_matrices))
+
         # check that we got even number for each template for error check
         if template2_count != 160 or template3_count != 160 or template4_count != 160:
             print("Error!")
@@ -179,33 +178,27 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
             return
         template_to_event_to_cond_mean = {}
         for template_id in template_to_pid_to_cond_to_event_to_mean:
-            for cond in all_4_names:
-                for pid in template_to_compare_to_pid_to_event_to_diff[template_id][compare_name]:
-                        for event_id in [2,3,4]:
-                            event_diff = template_to_compare_to_pid_to_event_to_diff[template_id][compare_name][pid][event_id]
-                            event_to_list_of_diffs[event_id].append(event_diff)
-                    if template_id not in template_to_compare_to_event_to_Tstat:
-                        template_to_compare_to_event_to_Tstat[template_id] = {}
-                    if compare_name not in template_to_compare_to_event_to_Tstat[template_id]:
-                        template_to_compare_to_event_to_Tstat[template_id][compare_name] = {}
-                    for event_id in [2,3,4]:
-                        if len(event_to_list_of_diffs[event_id]) != 40:
-                            print("Error: pids not 40 in Tstat compute.")
-                            return
-                        template_to_compare_to_event_to_Tstat[template_id][compare_name][event_id] = get_t_stat_of_list(event_to_list_of_diffs[event_id])
-                    # for each searchlight get a feature list
-        # step 4: compile those tstats into one vector which is our final
-        # tvalue vector representation that we will cluster
+            template_to_event_to_cond_mean[template_id] = {}
+            for event_id in [2,3,4]:
+                template_to_event_to_cond_mean[template_id][event_id] = {}
+                for cond in all_4_names:
+                    list_of_points_in_violin = []
+                    for pid in template_to_pid_to_cond_to_event_to_mean[template_id]:
+                        one_point = \
+                        template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][event_id]
+                        list_of_points_in_violin.append(one_point)
+                    assert(len(list_of_points_in_violin) == 40)
+                    template_to_event_to_cond_mean[template_id][event_id][cond] = np.mean(list_of_points_in_violin)
         features = []
         for template_id in [2,3,4]:
-            for compare_name in all_compare_names:
+            for cond in all_4_names:
                 for event_id in [2,3,4]:
-                    stat = template_to_compare_to_event_to_Tstat[template_id][compare_name][event_id]
+                    stat = template_to_event_to_cond_mean[template_id][event_id][cond]
                     features.append(stat)
-        print("len(features): ", len(features))
+        assert(len(features) == 36)
         # output it!
-       # features_np = np.array(features)
-        #np.savetxt(save_path, features_np, delimiter=",")
+        features_np = np.array(features)
+        np.savetxt(save_path, features_np, delimiter=",")
 
 def divide_chunks(l, chunk_size):
     """
