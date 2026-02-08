@@ -83,14 +83,14 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
         num_files_this_light = len(files_this_light)
         if num_files_this_light != 480:
             print("Error: searchlight " + light_id + " has " + str(num_files_this_light) + " files." )
-            np.savetxt(output_dir +  "/searchlights_collapseTR/" + light_id + "_NOT480.csv", np.array([1,2,3]), delimiter=",")
+            np.savetxt(output_dir +  "/searchlights_collapseTR_just_means/" + light_id + "_NOT480.csv", np.array([1,2,3]), delimiter=",")
             return
         # don't reprocess a searchlight again if we already did create
         # tvalue vector for it in the past
-        save_path = output_dir +  "/searchlights_collapseTR/" + light_id + ".csv"
-        # if os.path.exists(save_path):
-        #     print("Path Exists, Do Not Reprocess")
-        #     continue
+        save_path = output_dir +  "/searchlights_collapseTR_just_means/" + light_id + ".csv"
+        if os.path.exists(save_path):
+            print("Path Exists, Do Not Reprocess")
+            continue
         template2_count = 0
         template3_count = 0
         template4_count = 0
@@ -145,8 +145,6 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 new_arr = new_arr[1:13, 1:75].tolist()
             else:
                 mean_all_events = np.nanmean(new_arr, axis = 0).tolist()
-                import pdb
-                pdb.set_trace()
                 mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
                 mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
                 mean_event4 = np.nanmean(mean_all_events[event_4_start:event_5_start])
@@ -227,7 +225,7 @@ output_dir = "/scratch/gpfs/rk1593/clustering_output/"  # output dhere on della
 json_file_name = "jobs_info_dict_manual_jupyter_without_tuples.json"
 testing = False
 num_chunks = 31
-job_id_in = 0#int(os.environ["SLURM_ARRAY_TASK_ID"])
+job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
 print("job_id_in: ", job_id_in)
 if bash_it:
     run_jobs(input_dir, json_path = output_dir + json_file_name, 
