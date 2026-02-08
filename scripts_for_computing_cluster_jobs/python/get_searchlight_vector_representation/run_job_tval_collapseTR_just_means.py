@@ -48,19 +48,19 @@ def run_jobs(input_dir, json_path, testing = False,
         processes_list = []
         for index,chunk in enumerate(chunks_of_searchlights):
             print("process index: ", index)
-            # go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
-            #                              testing, 
-            #                              output_dir,
-            #                             input_dir,
-            #                             )
-            new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
-                            args = (   chunk, 
+            go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
                                          testing, 
-                                         output_dir, 
+                                         output_dir,
                                         input_dir,
-                                        ))
-            new_process.start()
-            processes_list.append(new_process)
+                                        )
+            # new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
+            #                 args = (   chunk, 
+            #                              testing, 
+            #                              output_dir, 
+            #                             input_dir,
+            #                             ))
+            # new_process.start()
+            # processes_list.append(new_process)
         for p in processes_list:
             p.join()
 
@@ -88,9 +88,9 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
         # don't reprocess a searchlight again if we already did create
         # tvalue vector for it in the past
         save_path = output_dir +  "/searchlights_collapseTR/" + light_id + ".csv"
-        if os.path.exists(save_path):
-            print("Path Exists, Do Not Reprocess")
-            continue
+        # if os.path.exists(save_path):
+        #     print("Path Exists, Do Not Reprocess")
+        #     continue
         template2_count = 0
         template3_count = 0
         template4_count = 0
@@ -162,6 +162,8 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                 template_to_pid_to_cond_to_event_to_mean[template_id][pid] = {}
             template_to_pid_to_cond_to_matrices[str(template_id)][pid][cond] = new_arr
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond] = {}
+            import pdb
+            pdb.set_trace()
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][2] = mean_event2
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][3] = mean_event3
             template_to_pid_to_cond_to_event_to_mean[template_id][pid][cond][4] = mean_event4
@@ -175,34 +177,10 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
             print("template3_count: ", template3_count)
             print("template4_count: ", template4_count)
             return
-
-        # step 2 is to get the dict mapping the template to the comparison
-        # where there are 6 differen comparisons between the 4 conditions, to pid to 
-        # a list of differences between one condition and another in the comparison
-        template_to_compare_to_pid_to_event_to_diff = {}
+        template_to_event_to_cond_mean = {}
         for template_id in template_to_pid_to_cond_to_event_to_mean:
-            if template_id not in template_to_compare_to_pid_to_event_to_diff:
-                template_to_compare_to_pid_to_event_to_diff[template_id] = {}
-            for pid in template_to_pid_to_cond_to_event_to_mean[template_id]:
-                for event_id in [2,3,4]:
-                    for comparison_name in all_compare_names:
-                        compare1_name,compare2_name = comparison_name.split("_")    
-                        if comparison_name not in template_to_compare_to_pid_to_event_to_diff[template_id]:
-                            template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name] = {}
-                        compare1 =  template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare1_name][event_id]
-                        compare2 = template_to_pid_to_cond_to_event_to_mean[template_id][pid][compare2_name][event_id]
-                        event_difference = compare1 - compare2
-                        if pid not in template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name]:
-                            template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name][pid] = {}
-                        template_to_compare_to_pid_to_event_to_diff[template_id][comparison_name][pid][event_id] = event_difference
-
-        # step 3: is to get the across subject tvalue for each comparison
-        # at each TR for each template and comparison
-        template_to_compare_to_event_to_Tstat = {}
-        for template_id in template_to_compare_to_pid_to_event_to_diff:
-            for compare_name in template_to_compare_to_pid_to_event_to_diff[template_id]:
-                    event_to_list_of_diffs = {2:[],3:[],4:[]}
-                    for pid in template_to_compare_to_pid_to_event_to_diff[template_id][compare_name]:
+            for cond in all_4_names:
+                for pid in template_to_compare_to_pid_to_event_to_diff[template_id][compare_name]:
                         for event_id in [2,3,4]:
                             event_diff = template_to_compare_to_pid_to_event_to_diff[template_id][compare_name][pid][event_id]
                             event_to_list_of_diffs[event_id].append(event_diff)
@@ -226,8 +204,8 @@ def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(s
                     features.append(stat)
         print("len(features): ", len(features))
         # output it!
-        features_np = np.array(features)
-        np.savetxt(save_path, features_np, delimiter=",")
+       # features_np = np.array(features)
+        #np.savetxt(save_path, features_np, delimiter=",")
 
 def divide_chunks(l, chunk_size):
     """
@@ -251,12 +229,12 @@ def get_t_stat_of_list(list):
 
 # DRIVER #
 bash_it = True
-input_dir = "/scratch/gpfs/rk1593/tar_by_searchlight/tar_by_searchlight/" # here we have stored a list of 480 files in a tar file for each searchlight
+input_dir = "/scratch/gpfs/rk1593/tar_by_searchlight/480_files_each_searchlight/" # here we have stored a list of 480 files in a tar file for each searchlight
 output_dir = "/scratch/gpfs/rk1593/clustering_output/"  # output dhere on della
 json_file_name = "jobs_info_dict_manual_jupyter_without_tuples.json"
 testing = False
 num_chunks = 31
-job_id_in = int(os.environ["SLURM_ARRAY_TASK_ID"])
+job_id_in = 0#int(os.environ["SLURM_ARRAY_TASK_ID"])
 print("job_id_in: ", job_id_in)
 if bash_it:
     run_jobs(input_dir, json_path = output_dir + json_file_name, 
