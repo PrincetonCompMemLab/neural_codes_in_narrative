@@ -1,0 +1,16 @@
+ohh I see! use attached csv file, with one column per participant
+ and in rows the weddings of day 2 in ascending order 
+ (i.e., that is not the order in which they have seen the weddings of course,
+  because they did not necessarily see the wedding 
+  in order 1,2,6,17,19,20,22,23,28,29,34,38). 
+  And then what is in each of these elements in coded like this: 
+
+NA is  campfire-coin-egg
+
+NB is flower-torch-painting
+
+
+
+SA is campfire-torch-egg
+
+SB is flower-coin-painting
