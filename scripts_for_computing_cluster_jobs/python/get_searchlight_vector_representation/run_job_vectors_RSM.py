@@ -8,14 +8,170 @@ from statistics import stdev
 import json
 import orjson
 import math
+import pandas as pd
 from multiprocessing import Process
-
+import re
 
 
 all_4_names = ['sameEv-sameSchema',
                 'otherEv-sameSchema',
                 'sameEv-otherSchema',
                 'otherEv-otherSchema']
+
+
+label_to_eventID_name_dict = {
+    'NA': {2: 'campfire', 3: 'coin', 4: 'egg'},
+    'NB': {2: 'flower', 3: 'torch', 4: 'painting'},
+    'SA': {2: 'campfire', 3: 'torch', 4: 'egg'},
+    'SB': {2: 'flower', 3: 'coin', 4: 'painting'}
+}
+
+
+weddings_df = pd.read_csv("day2_Paths_weddingOrder_ascending.csv", keep_default_na=False)
+weddings_df = weddings_df.iloc[:, 2:]
+
+weddings_df.columns = [
+    re.search(r"sub(\d+)day2", col).group(1) if re.search(r"sub(\d+)day2", col) else col
+    for col in weddings_df.columns
+]
+
+
+template_held_to_NS_to_event_to_index = {
+    "template": {"N": {"campfire": 0,
+                       "flower": 1,
+                       "coin": 2,
+                       "torch": 3,
+                       "egg": 4,
+                       "painting": 5},
+                 "S": {"campfire": 6,
+                       "flower": 7,
+                       "coin": 8,
+                       "torch": 9,
+                       "egg": 10,
+                       "painting": 11}},
+    "held": {"N": {"campfire": 0,
+                       "flower": 1,
+                       "coin": 2,
+                       "torch": 3,
+                       "egg": 4,
+                       "painting": 5},
+                 "S": {"campfire": 6,
+                       "flower": 7,
+                       "coin": 8,
+                       "torch": 9,
+                       "egg": 10,
+                       "painting": 11}}
+}
+
+def get_this_weddings_events(pid):
+    pass
+
+def construct_RSM_from_480_files(in_dir, subset_list_of_searchlights):
+    os.chdir(in_dir)
+    template_held_to_NS_to_event_to_acrossP = {
+        "template": {"N": {"campfire": [],
+                        "flower": [],
+                        "coin": [],
+                        "torch": [],
+                        "egg": [],
+                        "painting": []},
+                    "S": {"campfire": [],
+                        "flower": [],
+                        "coin": [],
+                        "torch": [],
+                        "egg": [],
+                        "painting": []}},
+        "held": {"N": {"campfire": [],
+                        "flower": [],
+                        "coin": [],
+                        "torch": [],
+                        "egg": [],
+                        "painting": []},
+                    "S": {"campfire": [],
+                        "flower": [],
+                        "coin": [],
+                        "torch": [],
+                        "egg": [],
+                        "painting": []}}
+    }
+    for counter_light, light_id in enumerate(subset_list_of_searchlights):
+        tar_file_name = light_id + "_new.tar.gz"
+        # check that we have a tar file for this searchlight
+        if not os.path.exists(in_dir + tar_file_name):
+            print("__________Light not on della yet!_________")
+            continue
+        tar = tarfile.open(tar_file_name)
+        # get the 480 files and make sure we got the right number
+        files_this_light = [x.name for x in tar.getmembers()]
+        num_files_this_light = len(files_this_light)
+        if num_files_this_light != 480:
+            print("Error: searchlight " + light_id + " has " + str(num_files_this_light) + " files." )
+            np.savetxt(output_dir +  "/searchlights_collapseTR_just_means/" + light_id + "_NOT480.csv", np.array([1,2,3]), delimiter=",")
+            return
+        # don't reprocess a searchlight again if we already did create
+        # tvalue vector for it in the past
+        save_path = output_dir +  "/searchlights_collapseTR_just_means/" + light_id + ".csv"
+        if os.path.exists(save_path):
+            print("Path Exists, Do Not Reprocess")
+            continue
+        template2_count = 0
+        template3_count = 0
+        template4_count = 0
+        template_to_pid_to_cond_to_event_to_mean = {}
+        i = 0
+        # step 1 is to get dict mapping the template (2,3 or 4) to pid (N = 40) to cond (condition) where condition is synonymous
+        # with "other-Event-same-Schema" and so on
+        for file_name in files_this_light:
+            splitted_file_name = file_name.split("_")
+            # get the participant id
+            pid = splitted_file_name[1]
+            cond = splitted_file_name[3] + "-" + splitted_file_name[4]
+            template_id = int(file_name[-5])
+            if file_name[-5] == "2":
+                template2_count += 1 
+            elif file_name[-5] == "3":
+                template3_count += 1 
+            elif file_name[-5] == "4":
+                template4_count += 1 
+            else:
+                print("Error: file_name template retrieval error.")
+                print(file_name)
+                print(tar_file_name)
+                return
+            
+            # change the directory to this in_dir to be able to open the tar file
+            os.chdir(in_dir)
+            i += 1
+            in_text = tar.extractfile(file_name).read()
+            csv_file = io.StringIO(in_text.decode('ascii'))
+            random_replacer_for_nothing = str(3e200) # this is set to be something super big (greater than 1), so that 
+            # when we replace all numbers outside [-1,1] with NaN then these lines where no data is recorded become NaN
+            # cleaning_mean_start = time.time()
+            csv_lines = [[y.replace(" ", "") for y in x] for x in csv.reader(csv_file)]
+            if testing:
+                csv_lines[0][0] = "-1000"
+            # replace any spots where there is no data collected with the random replacer (more explained above why I did this)
+            csv_lines = [[y if y != "" else random_replacer_for_nothing for y in x] for x in csv_lines]
+            try:
+                new_arr = np.array(csv_lines).astype("float")
+                # replace the empty due to the random replacer and other anomaly large numbers outside of [-1,1] (the range for correlation) found in raw data
+                new_arr[abs(new_arr) > 1] = np.nan
+                # now we edit the new_arr so that 0-indexed row 9, columns 47 through 73 become nan for subject 102
+                if pid == "sub-102": # sub-102 had some issues in this area of the FMRI
+                    new_arr[9,47:74] = np.nan
+            except ValueError:
+                pdb.set_trace()
+            # if in testing mode we need to crop out the first column and the first row
+            # since these files were different 
+            if testing:
+                mean_list = np.nanmean(new_arr[1:13, 1:75], axis = 0).tolist()
+                new_arr = new_arr[1:13, 1:75].tolist()
+            else:
+                mean_all_events = np.nanmean(new_arr, axis = 0).tolist()
+                mean_event2 = np.nanmean(mean_all_events[event_2_start:event_3_start])
+                mean_event3 = np.nanmean(mean_all_events[event_3_start:event_4_start])
+                mean_event4 = np.nanmean(mean_all_events[event_4_start:event_5_start])
+                new_arr = new_arr.tolist()
 
 # mark where each event starts and ends
 event_1_start = 17
@@ -48,7 +204,7 @@ def run_jobs(input_dir, json_path, testing = False,
         processes_list = []
         for index,chunk in enumerate(chunks_of_searchlights):
             print("process index: ", index)
-            go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
+            go_from_480searchlight_files_representing_fingerprintPlot_to_RSM(chunk, 
                                          testing, 
                                          output_dir,
                                         input_dir,
@@ -66,12 +222,14 @@ def run_jobs(input_dir, json_path, testing = False,
 
 # requires: searchlight_to_files_tuples for all searchlights, subset_list_of_searchlights are a list of the searchlights we want to include for this job
 # outputs a csv file for each searchlight
-def go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(subset_list_of_searchlights, 
+def go_from_480searchlight_files_representing_fingerprintPlot_to_RSM(subset_list_of_searchlights, 
             testing = False, 
             output_dir = "",
               in_dir = ""):
     os.chdir(in_dir)
+    construct_RSM_from_480_files(in_dir, subset_list_of_searchlights)
     for counter_light, light_id in enumerate(subset_list_of_searchlights):
+        construct_RSM_from_480_files()
         tar_file_name = light_id + "_new.tar.gz"
         # check that we have a tar file for this searchlight
         if not os.path.exists(in_dir + tar_file_name):

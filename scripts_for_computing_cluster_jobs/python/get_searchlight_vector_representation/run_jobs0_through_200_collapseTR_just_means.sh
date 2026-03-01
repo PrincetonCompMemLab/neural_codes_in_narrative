@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH -t 20
+#SBATCH -t 100
 #SBATCH --mail-user=rk1593@princeton.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --job-name run_jobs_0_through_200_tval

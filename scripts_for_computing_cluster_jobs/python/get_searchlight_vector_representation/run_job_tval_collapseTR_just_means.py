@@ -48,19 +48,19 @@ def run_jobs(input_dir, json_path, testing = False,
         processes_list = []
         for index,chunk in enumerate(chunks_of_searchlights):
             print("process index: ", index)
-            go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
-                                         testing, 
-                                         output_dir,
-                                        input_dir,
-                                        )
-            # new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
-            #                 args = (   chunk, 
+            # go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector(chunk, 
             #                              testing, 
-            #                              output_dir, 
+            #                              output_dir,
             #                             input_dir,
-            #                             ))
-            # new_process.start()
-            # processes_list.append(new_process)
+            #                             )
+            new_process = Process(target = go_from_480searchlight_files_representing_fingerprintPlot_to_tvalue_vector, 
+                            args = (   chunk, 
+                                         testing, 
+                                         output_dir, 
+                                        input_dir,
+                                        ))
+            new_process.start()
+            processes_list.append(new_process)
         for p in processes_list:
             p.join()
 
@@ -220,8 +220,8 @@ def get_t_stat_of_list(list):
 
 # DRIVER #
 bash_it = True
-input_dir = "/scratch/gpfs/rk1593/tar_by_searchlight/480_files_each_searchlight/" # here we have stored a list of 480 files in a tar file for each searchlight
-output_dir = "/scratch/gpfs/rk1593/clustering_output/"  # output dhere on della
+input_dir = "/scratch/gpfs/KNORMAN/rkempner/tar_by_searchlight_rk1593/480_files_each_searchlight/" # here we have stored a list of 480 files in a tar file for each searchlight
+output_dir = "/scratch/gpfs/KNORMAN/rkempner/clustering_output/"  # output dhere on della
 json_file_name = "jobs_info_dict_manual_jupyter_without_tuples.json"
 testing = False
 num_chunks = 31
