@@ -1,0 +1,761 @@
+---
+title: "fingerprints"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(dplyr)
+library(extrafont)
+loadfonts()
+```
+
+
+```{r}
+
+# these interpret functions are different ways of changing the labels on the plots
+# since we want different labels for different fingerprint codes
+# to best convey the information in the plots
+
+interpret_event_specific = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('same event')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other event') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('same event')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('other event')
+    }
+}
+
+interpret_schema_specific = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('same schema')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('same schema') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('other schema')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('other schema')
+    }
+}
+
+interpret_path_specific = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('same path')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other path') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('other path')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('other path')
+    }
+}
+
+
+interpret_path_specific = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('same path')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other path') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('other path')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('other path')
+    }
+}
+
+interpret_rotated = function(cond, event_template, event_matching) {
+    if (cond == 'sameEv-sameSchema') {
+       return('same path')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other path') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('other path')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('other path')
+    }
+}
+
+
+
+interpret = function(cond, template_id, event_match_id) {
+  
+    # if we didn't get one of the easy mappings
+    if (cond == 'sameEv-sameSchema') {
+       return('correct-path')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other-path-from-same-schema')
+    }
+    # then do the conditionals
+    # if event2 is used as template, then:
+    # - during event2 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    if (template_id == 2) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+                return('visually-matched-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+                return('unrelated-path')
+            }
+        } else if (event_match_id == 3) {
+            if (cond == 'sameEv-otherSchema') {
+               return('unrelated-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+                
+        } else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            }
+            else if(cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else {
+          print("Error: event_match_id invalid",event_match_id )
+        }
+    }
+    # if event3 is used as template, then:
+    # - during event2 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    else if (template_id == 3) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+              return('unrelated-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        } else if (event_match_id == 3) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+               return('unrelated-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        } else {
+           print("Error: event_match_id invalid",event_match_id)
+        }
+    }
+    # if event4 is used as template, then:
+    # - during event2 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    else if (template_id == 4) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else if (event_match_id == 3) {
+           if (cond == 'sameEv-otherSchema') {
+             return('unrelated-path')
+           }
+            else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        }
+        else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+                return('unrelated-path')  
+            }
+        } else {
+          print("Error: event_match_id invalid",event_match_id )
+        }
+    } else {
+        print("Error: template_id invalid")
+    }
+}
+   
+interpret2 = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('path1')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('path2') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('path3')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('path4')
+    }
+  
+}
+
+get_new_path_ids = function(raw_df, code_name) {
+  if (code_name == "null") {
+    return(raw_df$path_id)
+  }
+  index = 0
+  new_list = c()
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    if (code_name == "event_specific") {
+       new_list = c(new_list, interpret_event_specific(path_id))
+    } else if (code_name == "schema_specific") {
+      new_list = c(new_list, interpret_schema_specific(path_id))
+    } else if (code_name == "path_specific") {
+      new_list = c(new_list, interpret_path_specific(path_id))
+    } else if (code_name == "rotated") {
+      new_list = c(new_list, )
+    }
+    
+  }
+  return(new_list)
+}
+
+get_new_template_ids = function(raw_df) {
+  new_list = c()
+  for (match in raw_df$event_template_id) {
+    if (match == 2) {
+      new_list = c(new_list,"event 2 template")
+    } else if (match == 3) {
+      new_list = c(new_list,"event 3 template")
+    } else if (match == 4) {
+      new_list = c(new_list,"event 4 template")
+    } else {
+      new_list = c(new_list,"other")
+    }
+  }
+  return(new_list)
+}
+
+get_new_template_ids_old = function(raw_df) {
+  new_list = c()
+  for (match in raw_df$event_template_id) {
+    if (match == 2) {
+      new_list = c(new_list,"campfire/flower (2)")
+    } else if (match == 3) {
+      new_list = c(new_list,"coin/torch (3)")
+    } else if (match == 4) {
+      new_list = c(new_list,"egg/painting (4)")
+    } else {
+      new_list = c(new_list,"other")
+    }
+  }
+  return(new_list)
+}
+
+
+get_new_matching_ids = function(raw_df) {
+  new_list = c()
+  for (match in raw_df$event_matching_id) {
+    if (match == 2) {
+      new_list = c(new_list,"apply to event 2")
+    } else if (match == 3) {
+      new_list = c(new_list,"apply to event 3")
+    } else if (match == 4) {
+      new_list = c(new_list,"apply to event 4")
+    } else {
+      new_list = c(new_list,"other")
+    }
+  }
+  return(new_list)
+}
+
+
+
+                    
+```
+
+```{r}
+
+
+
+# these functions are to replace the observed data in raw_df with idealized plots
+
+
+get_event_specific_ideal_corr = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.05
+  b_sd = 0.01
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    if (path_id == 'sameEv-sameSchema') {
+       mean = mean_plant + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-sameSchema') {
+       mean = 0 + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'sameEv-otherSchema') {
+       mean = mean_plant + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-otherSchema') {
+       mean = 0 + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+    }
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+get_event_specific_3by3 = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.0031
+  b_sd = 0.0009
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    template_id = raw_df$event_template_id[index]
+    matching_id = raw_df$event_matching_id[index]
+    if (template_id == matching_id) {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = mean_plant + 0.00045
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0 + 0.00045
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = mean_plant 
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = 0 
+      } 
+    } else {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = 0.00024
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0.00014
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = 0
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = -0.00014
+      }
+    }
+   corr_list = c(corr_list, mean)
+   lb_list = c(lb_list, mean - b_sd)
+   ub_list = c(ub_list, mean + b_sd)
+      
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+get_event_specific_offdiag_ideal_corr = function(raw_df) {
+ # browser()
+  corr_list = rep(0, length(raw_df$path_id))
+  lb_list = rep(0, length(raw_df$path_id))
+  ub_list = rep(0, length(raw_df$path_id))
+  path_ids = unique(raw_df$path_id)
+  index = 0
+  mean_x = 0
+  mean_y = 0
+  for (tr in 1:15) {
+    index = index + 1
+    tr = raw_df$tr[index]
+    #browser()
+   # mean_x = mean_x + rnorm(1, mean = 0, sd = 0.005)
+   # mean_y = mean_y + rnorm(1, mean = 0, sd = 0.005)
+    b_sd = 0.0009
+    xy_sd =  0.00002
+    mean_x = rnorm(1, mean = 0, sd = xy_sd)
+    mean_y = mean_x#rnorm(1, mean = 0, sd = xy_sd)
+    for (path_id in path_ids) {
+      indices = (raw_df$tr == tr & raw_df$path_id == path_id)
+      path_sd = -0.0000
+      if (path_id == 'sameEv-sameSchema') {
+         mean = 0.0002
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0.0001
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = 0
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = -0.0001
+      }
+     corr_list[indices] = mean
+     lb_list[indices] = mean - b_sd
+     ub_list[indices] = mean + b_sd
+    }
+
+
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+get_schema_specific_ideal_corr = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.05
+  b_sd = 0.0001
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    if (path_id == 'sameEv-sameSchema') {
+       mean = 0.003
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-sameSchema') {
+       mean = 0.0035
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'sameEv-otherSchema') {
+       mean =  0
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-otherSchema') {
+       mean = 0.0005
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+    }
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+
+get_path_specific_ideal_corr = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.05
+  b_sd = 0.0009
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    if (path_id == 'sameEv-sameSchema') {
+       mean = 0.0029
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-sameSchema') {
+       mean = 0.0006
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'sameEv-otherSchema') {
+       mean =  -0.0006
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-otherSchema') {
+       mean = 0
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+    }
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+get_rotated_ideal_corr = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.05
+  b_sd = 0.01
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    if (path_id == 'sameEv-sameSchema') {
+       mean = -mean_plant + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-sameSchema') {
+       mean = mean_plant + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'sameEv-otherSchema') {
+       mean = mean_plant  + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+       
+    } else if (path_id == 'otherEv-otherSchema') {
+       mean = -mean_plant  + rnorm(1, mean = 0, sd = 0.005)
+       corr_list = c(corr_list, mean)
+       lb_list = c(lb_list, mean - b_sd)
+       ub_list = c(ub_list, mean + b_sd)
+    }
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+get_rotated_specific_3by3 = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  mean_plant = 0.0031
+  b_sd = 0.0009
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    template_id = raw_df$event_template_id[index]
+    matching_id = raw_df$event_matching_id[index]
+    if (template_id == 2 & matching_id == 2) {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = mean_plant + 0.00045
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0 + 0.00045
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = mean_plant 
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = 0 
+      } 
+    } else if (template_id == 2 & matching_id == 3) {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = 0 + 0.00045
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = mean_plant + 0.00045
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = 0
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = mean_plant
+      } 
+    }  else if (template_id == 3 & matching_id == 2) {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = 0 + 0.00045
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = mean_plant 
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = mean_plant + 0.00045
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = 0
+      } 
+    } else if (template_id == 3 & matching_id == 3) {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = mean_plant + 0.0022
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0 + 0.00045
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = mean_plant - 0.00045
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = mean_plant
+      } 
+    } else {
+      if (path_id == 'sameEv-sameSchema') {
+         mean = 0.00024
+      } else if (path_id == 'otherEv-sameSchema') {
+         mean = 0.00014
+      } else if (path_id == 'sameEv-otherSchema') {
+         mean = 0
+      } else if (path_id == 'otherEv-otherSchema') {
+         mean = -0.00014
+      }
+    }
+   corr_list = c(corr_list, mean)
+   lb_list = c(lb_list, mean - b_sd)
+   ub_list = c(ub_list, mean + b_sd)
+      
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+
+get_null_3by3 = function(raw_df) {
+  corr_list = c()
+  lb_list = c()
+  ub_list = c()
+  index = 0
+  b_sd = 0.0009
+  mean_plant = 0.0031
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    template_id = raw_df$event_template_id[index]
+    matching_id = raw_df$event_matching_id[index]
+    if (path_id == 'sameEv-sameSchema') {
+       mean = 0.0002
+    } else if (path_id == 'otherEv-sameSchema') {
+       mean = 0.0001
+    } else if (path_id == 'sameEv-otherSchema') {
+       mean = 0
+    } else if (path_id == 'otherEv-otherSchema') {
+       mean = -0.0001
+    }
+   corr_list = c(corr_list, mean)
+   lb_list = c(lb_list, mean - b_sd)
+   ub_list = c(ub_list, mean + b_sd)
+      
+  }
+  raw_df$corr = corr_list
+  raw_df$lower_bound = lb_list
+  raw_df$upper_bound = ub_list
+  return(raw_df)
+}
+
+
+
+```
+
+```{r}
+loadfonts(device = "pdf", quiet = TRUE)
+
+plot_raw_fingerprint_cluster = function(raw_df, cluster_id, n_clusters, ordering = c('sameEv-sameSchema', 'otherEv-sameSchema', 'otherEv-otherSchema', 'sameEv-otherSchema')) {
+   corr_list = raw_df$corr
+   lower_bound_list = raw_df$lower_bound
+   upper_bound_list = raw_df$upper_bound
+   
+    template_tag = "campfire/flower"
+    template_tag = "coin/torch"
+    template_tag = "egg/painting"
+    ggplot(raw_df, aes(tr,corr)) +
+        geom_line(aes(color = path_id, group = path_id)) +
+        geom_ribbon(alpha = 0.2, aes(x = tr, ymin = lower_bound, ymax = upper_bound, group = path_id, fill = path_id)) +
+        facet_grid(event_matching_id ~ event_template_id ) +
+        xlab("TR") +
+        ylab("neural similarity (correlation)") +
+        ggtitle(paste("", sep = "")) + 
+        scale_fill_discrete(
+                      breaks= ordering,
+                      labels= ordering) +
+         scale_colour_discrete(breaks=ordering, labels=ordering) +
+         #ylim(-0.01, 0.01) +
+        theme(text=element_text(family="sans"))
+  
+ 
+
+}    
+```
+
+```{r}
+get_raw_df_path = function(n_clusters_in, cluster_id_in, distill_it, exaggerated_0, weight_it, cap_zero, threshold, by_sil) {
+  if (distill_it == FALSE) {
+    path = paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval.csv", sep = "")
+  } else {
+    path = paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_",  as.character(n_clusters_in), "clusters_tval", sep = "")
+    if (by_sil) {
+      path = paste(path, "_by_silhouttes", sep = "")
+      
+    } else {
+      if (exaggerated_0) {
+        path = paste(path, "_Consider0_T", as.character(threshold), sep = "")
+      } else {
+        path = paste(path, "_NoConsider0", sep = "")
+      }
+      
+      if (weight_it) {
+        path = paste(path, "_WeightByMean", sep = "")
+      } else {
+        path = paste(path, "_NoWeightByMean", sep = "")
+      }
+         
+      if (cap_zero) {
+        path = paste(path, "_CapZero", sep = "")
+      } else {
+        path = paste(path, "_NoCapZero", sep = "")
+      }
+    }
+   
+    path = paste(path, "_", as.character(distill_numLights), "distill_numLights.csv", sep = "")
+    
+  }
+  print(path)
+  return(path)
+}
+```
+
+
+```{r pressure, echo=FALSE}
+n_clusters_in = 5
+cluster_id_in = 2
+exaggerated_0 = FALSE
+weight_it = TRUE
+cap_zero = FALSE
+distill_it = FALSE
+distill_numLights = 0.5
+threshold = 0.5
+by_sil = FALSE
+
+
+
+print(get_raw_df_path(n_clusters_in, cluster_id_in, distill_it,
+                                  exaggerated_0, weight_it, cap_zero, 
+                                  threshold, by_sil))
+raw_df = read.csv(get_raw_df_path(n_clusters_in, cluster_id_in, distill_it,
+                                  exaggerated_0, weight_it, cap_zero, 
+                                  threshold, by_sil))
+
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+
+
+# these lines of code replace the observed data in raw_df with idealized plots
+#raw_df = get_event_specific_ideal_corr(raw_df)
+#raw_df = get_event_specific_offdiag_ideal_corr(raw_df)
+#raw_df = get_path_specific_ideal_corr(raw_df)
+#raw_df = get_rotated_ideal_corr(raw_df)
+#raw_df = get_schema_specific_ideal_corr(raw_df)
+#raw_df = get_event_specific_3by3(raw_df)
+#raw_df = get_null_3by3(raw_df)
+
+# this changes the labels
+raw_df$event_matching_id = get_new_matching_ids(raw_df)
+raw_df$event_template_id = get_new_template_ids(raw_df)
+
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in,  n_clusters_in, ordering = c('sameEv-sameSchema' , 'otherEv-otherSchema', 'sameEv-otherSchema', 'otherEv-sameSchema'))
+
+ggsave(filename = "arial-null-obs.pdf")
+
+```

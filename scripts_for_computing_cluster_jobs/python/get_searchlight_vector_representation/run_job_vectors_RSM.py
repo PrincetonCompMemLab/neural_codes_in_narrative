@@ -142,8 +142,11 @@ def construct_RSM_from_480_files(in_dir, subset_list_of_searchlights):
                 this_wedding_event3 = this_wedding_row[event_3_start:event_4_start]
                 this_wedding_event4 = this_wedding_row[event_4_start:event_5_start]
                 wedding_type = weddings_df[pid][wedding_id]
-                held_out_event_name = label_to_eventID_name_dict[wedding_type]
-                template_event_name = 
+                wedding_schema = wedding_type[0]
+                for event_id in [2,3,4]:
+                    held_out_event_name = label_to_eventID_name_dict[wedding_type][event_id]
+                    template_event_name = get_template_event_schema(held_out_event_name, event_id, template_id)
+                    
 
 # mark where each event starts and ends
 event_1_start = 17

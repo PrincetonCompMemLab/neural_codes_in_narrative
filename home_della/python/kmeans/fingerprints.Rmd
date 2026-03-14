@@ -1,0 +1,374 @@
+---
+title: "fingerprints"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(dplyr)
+
+interpret = function(cond, template_id, event_match_id) {
+  
+    # if we didn't get one of the easy mappings
+    if (cond == 'sameEv-sameSchema') {
+       return('correct-path')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('other-path-from-same-schema')
+    }
+    # then do the conditionals
+    # if event2 is used as template, then:
+    # - during event2 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    if (template_id == 2) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+                return('visually-matched-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+                return('unrelated-path')
+            }
+        } else if (event_match_id == 3) {
+            if (cond == 'sameEv-otherSchema') {
+               return('unrelated-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+                
+        } else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            }
+            else if(cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else {
+          print("Error: event_match_id invalid",event_match_id )
+        }
+    }
+    # if event3 is used as template, then:
+    # - during event2 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    else if (template_id == 3) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+              return('unrelated-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        } else if (event_match_id == 3) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+               return('unrelated-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        } else {
+           print("Error: event_match_id invalid",event_match_id)
+        }
+    }
+    # if event4 is used as template, then:
+    # - during event2 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    # - during event3 TRs the other-event/other-schema condition is the visually-matched-path and the same-event/other-schema condition is the unrelated-path.
+    # - during event4 TRs the same-event/other-schema condition is the visually-matched-path and the other-event/other-schema condition is the unrelated-path.
+    else if (template_id == 4) {
+        if (event_match_id == 2) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            } else if (cond == 'otherEv-otherSchema') {
+              return('unrelated-path')
+            }
+        } else if (event_match_id == 3) {
+           if (cond == 'sameEv-otherSchema') {
+             return('unrelated-path')
+           }
+            else if (cond == 'otherEv-otherSchema') {
+              return('visually-matched-path')
+            }
+        }
+        else if (event_match_id == 4) {
+            if (cond == 'sameEv-otherSchema') {
+              return('visually-matched-path')
+            }
+            else if (cond == 'otherEv-otherSchema') {
+                return('unrelated-path')  
+            }
+        } else {
+          print("Error: event_match_id invalid",event_match_id )
+        }
+    } else {
+        print("Error: template_id invalid")
+    }
+}
+    
+                    
+```
+
+
+```{r}
+
+interpret2 = function(cond) {
+    if (cond == 'sameEv-sameSchema') {
+       return('path1')
+    } else if (cond == 'otherEv-sameSchema') {
+      return('path2') 
+    } else if (cond == 'sameEv-otherSchema') {
+      return('path3')
+    } else if (cond == 'otherEv-otherSchema') {
+      return('path4')
+    }
+  
+}
+
+ #interpret(path_id, 
+#                                    raw_df$event_template_id[index], 
+#                                    raw_df$event_matching_id[index]))
+get_new_path_ids = function(raw_df) {
+  index = 0
+  new_list = c()
+  for (path_id in raw_df$path_id) {
+    index = index + 1
+    new_list = c(new_list, interpret(path_id, 
+                                 raw_df$event_template_id[index], 
+                                   raw_df$event_matching_id[index]))
+                 
+                 #interpret2(path_id))
+  }
+  return(new_list)
+}
+
+get_new_matching_ids = function(raw_df) {
+  new_list = c()
+  for (match in raw_df$event_matching_id) {
+    if (match == 2) {
+      new_list = c(new_list,"campfire/flower")
+    } else if (match == 3) {
+      new_list = c(new_list,"coin/torch")
+    } else if (match == 4) {
+      new_list = c(new_list,"egg/painting")
+    } else {
+      new_list = c(new_list,"other")
+    }
+  }
+  return(new_list)
+}
+
+
+
+get_sem_bounds = function(raw_df) {
+  index = 0
+  new_lb_list = c()
+  new_ub_list = c()
+  for (mean in raw_df$corr) {
+    index = index + 1
+    lb = raw_df$lower_bound[index]
+    sem = (lb - mean) / (-1 * 0.05)
+    new_lb_list = c(new_lb_list, mean - (5*sem))
+    new_ub_list = c(new_ub_list, mean + (5*sem))
+  }
+  raw_df$lower_bound = new_lb_list
+  raw_df$upper_bound = new_ub_list
+  return(raw_df)
+}
+
+```
+
+```{r}
+plot_raw_fingerprint_cluster = function(raw_df, cluster_id, event_template_id, n_clusters) {
+   corr_list = raw_df$corr
+   lower_bound_list = raw_df$lower_bound
+   upper_bound_list = raw_df$upper_bound
+    if (event_template_id == 2) {
+      template_tag = "campfire/flower"
+    } else if (event_template_id == 3) {
+      template_tag = "coin/torch"
+    } else if (event_template_id == 4) {
+      template_tag = "egg/painting"
+    } 
+    ggplot(raw_df, aes(tr,corr)) +  
+        geom_line(aes(color = path_id, group = path_id)) +
+        geom_ribbon(alpha = 0.2, aes(x = tr, ymin = lower_bound, ymax = upper_bound, group = path_id, fill = path_id)) +
+        facet_grid(. ~ event_matching_id) +
+        xlab("TR") +
+        ylab("Neural Similarity with Template (correlation)") +
+        ggtitle(paste( #"K = ", 
+                 # as.character(n_clusters),
+                 # " & Cluster ", as.character(cluster_id), 
+                   "Event Template: ", 
+                  as.character(template_tag), sep = ""))
+}    
+```
+
+```{r}
+get_raw_df_path = function(n_clusters_in, cluster_id_in, event_template_id_in, distill_it, exaggerated_0, weight_it, cap_zero, threshold, by_sil, power_weight) {
+  if (distill_it == FALSE) {
+    path = paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval.csv", sep = "")
+  } else {
+    path = paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_",  as.character(n_clusters_in), "clusters_tval", sep = "")
+    if (by_sil) {
+      path = paste(path, "_by_silhouttes", sep = "")
+      
+    } else {
+      if (exaggerated_0) {
+        path = paste(path, "_Consider0_T", as.character(threshold), sep = "")
+      } else {
+        path = paste(path, "_NoConsider0", sep = "")
+      }
+      
+      if (weight_it) {
+        path = paste(path, "_WeightByMean", sep = "")
+      } else {
+        path = paste(path, "_NoWeightByMean", sep = "")
+      }
+         
+      if (cap_zero) {
+        path = paste(path, "_CapZero", sep = "")
+      } else {
+        path = paste(path, "_NoCapZero", sep = "")
+      }
+    }
+   
+    path = paste(path, "_", as.character(distill_numLights), "distill_numLights.csv", sep = "")
+    
+  }
+  print(path)
+  return(path)
+}
+```
+
+
+```{r pressure, echo=FALSE}
+n_clusters_in = 5
+cluster_id_in = 1
+exaggerated_0 = FALSE
+weight_it = TRUE
+cap_zero = FALSE
+distill_it = FALSE
+distill_numLights = 10000
+threshold = 0.5
+by_sil = FALSE
+power_weight = 1
+
+event_template_id_in = 2
+print(get_raw_df_path(n_clusters_in, cluster_id_in,
+                                  event_template_id_in, distill_it,
+                                  exaggerated_0, weight_it, cap_zero, 
+                                  threshold, by_sil, power_weight))
+raw_df = read.csv(get_raw_df_path(n_clusters_in, cluster_id_in,
+                                  event_template_id_in, distill_it,
+                                  exaggerated_0, weight_it, cap_zero, 
+                                  threshold, by_sil, power_weight))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+raw_df$event_matching_id = get_new_matching_ids(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+
+event_template_id_in = 3
+raw_df = read.csv(get_raw_df_path(n_clusters_in, cluster_id_in, event_template_id_in, distill_it, exaggerated_0, weight_it, cap_zero, threshold, by_sil, power_weight))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+raw_df$event_matching_id = get_new_matching_ids(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+
+event_template_id_in = 4
+raw_df = read.csv(get_raw_df_path(n_clusters_in, cluster_id_in, event_template_id_in, distill_it, exaggerated_0, weight_it, cap_zero, threshold, by_sil, power_weight))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+raw_df$event_matching_id = get_new_matching_ids(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+```
+
+
+```{r pressure, echo=FALSE}
+n_clusters_in = 5
+cluster_id_in = 1
+
+
+event_template_id_in = 2
+raw_df = read.csv(paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval2.csv", sep = ""))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                       event_matching_id == 0 | event_matching_id == 1 | event_matching_id == 5)
+#raw_df$path_id = get_new_path_ids(raw_df)
+#raw_df = get_sem_bounds(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+
+event_template_id_in = 3
+raw_df = read.csv(paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval2.csv", sep = ""))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                         event_matching_id == 0 | event_matching_id == 1 | event_matching_id == 5)
+#raw_df$path_id = get_new_path_ids(raw_df)
+#raw_df = get_sem_bounds(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+
+event_template_id_in = 4
+raw_df = read.csv(paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval2.csv", sep = ""))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                       event_matching_id == 0 | event_matching_id == 1 | event_matching_id == 5)
+#raw_df$path_id = get_new_path_ids(raw_df)
+#raw_df = get_sem_bounds(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+
+
+#raw_df = read.csv(paste("/scratch/gpfs/rk1593/clustering_output/kmeans_fingerprints_tval/kmeans_", as.character(n_clusters_in), "clusters_tval.csv", sep = ""))
+#raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+#                         event_template_id == event_template_id_in,
+#                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+#raw_df$path_id = get_new_path_ids(raw_df)
+#raw_df = get_sem_bounds(raw_df)
+#plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+```
+
+
+
+```{r pressure, echo=FALSE}
+alpha = 0.1
+n_clusters_in = 7
+
+event_template_id_in = 4
+cluster_id_in = 3
+
+
+raw_df = read.csv(paste("/scratch/gpfs/rk1593/clustering_output/kmodes_fingerprints_alpha", as.character(alpha),
+                        "/kmodes_", as.character(n_clusters_in), "clusters_alpha", as.character(alpha),".csv", sep = ""))
+raw_df = filter(raw_df, cluster_id == cluster_id_in, 
+                         event_template_id == event_template_id_in,
+                         event_matching_id == 2 | event_matching_id == 3 | event_matching_id == 4)
+#raw_df$path_id = get_new_path_ids(raw_df)
+#raw_df = get_sem_bounds(raw_df)
+plot_raw_fingerprint_cluster(raw_df, cluster_id_in, event_template_id_in, n_clusters_in)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+change_raw_df_path_id = function(raw_df) {
+  for index,row in raw_df.iterrows():
+        raw_df.loc[index,"path_id"] =  interpret(raw_df.loc[index,"path_id"], raw_df.loc[index,"event_template_id"], raw_df.loc[index,"event_matching_id"])
+}
+
+
+```
+

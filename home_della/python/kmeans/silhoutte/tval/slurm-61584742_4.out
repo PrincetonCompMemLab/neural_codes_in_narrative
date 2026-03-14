@@ -1,0 +1,10 @@
+got X
+got D_matrix
+got s_coeffs
+Traceback (most recent call last):
+  File "get_s_scores_sklearn_collapseTR.py", line 24, in <module>
+    np.savetxt(output_dir, sample_silhouette_values, delimiter=",")
+  File "<__array_function__ internals>", line 5, in savetxt
+  File "/home/rk1593/.conda/envs/wedding_schema/lib/python3.8/site-packages/numpy/lib/npyio.py", line 1368, in savetxt
+    open(fname, 'wt').close()
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/gpfs/rk1593/clustering_output/kmeans_silhouette_collapseTR/kmeans4_silhouttes_collapseTR.csv'
